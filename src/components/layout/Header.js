@@ -1,4 +1,4 @@
-import React, { Fragment } from "react";
+import React, { Fragment, useContext } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -6,6 +6,7 @@ import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import useScrollTrigger from "@material-ui/core/useScrollTrigger";
 import { Link } from "react-router-dom";
+import AuthContext from "../context/AuthContext";
 // import IconButton from '@material-ui/core/IconButton';
 // import MenuIcon from '@material-ui/icons/Menu';
 
@@ -26,6 +27,9 @@ function ElevationScroll(props) {
 
 export default function Header() {
   const classes = useStyles();
+  const authCtx = useContext(AuthContext);
+
+  const { isLoggedIn } = authCtx;
 
   return (
     <Fragment>
@@ -40,19 +44,19 @@ export default function Header() {
                 React Auth
               </Link>
             </Typography>
-            <Link className={classes.link} to="/login">
+            {!isLoggedIn && <Link className={classes.link} to="/login">
               <Button className={classes.menuButton} color="inherit">
                 Login
               </Button>
-            </Link>
-            <Link className={classes.link} to="/profile">
+            </Link>}
+            {isLoggedIn && <Link className={classes.link} to="/profile">
               <Button className={classes.menuButton} color="inherit">
                 Profile
               </Button>
-            </Link>
-            <Button className={classes.menuButton} color="inherit">
+            </Link>}
+            {isLoggedIn && <Button className={classes.menuButton} color="inherit">
               Logout
-            </Button>
+            </Button>}
           </Toolbar>
         </AppBar>
       </ElevationScroll>
