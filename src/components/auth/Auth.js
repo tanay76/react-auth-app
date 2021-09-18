@@ -16,6 +16,7 @@ export default function Auth() {
   const [password, setPassword] = useState();
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswodError] = useState(false);
+  const [errMessage, setErrMessage] = useState();
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const history = useHistory();
@@ -28,17 +29,19 @@ export default function Auth() {
 
   const emailChangeHandler = (event) => {
     setEmailError(false);
+    setHasError(false);
     setEmail(event.target.value);
   };
 
   const passwordChangeHandler = (event) => {
     setPasswodError(false);
+    setHasError(false);
     setPassword(event.target.value);
   };
 
   const formSubmitHandler = (event) => {
     event.preventDefault();
-    console.log("39");
+    setHasError(false);
     setIsLoading(true);
     if (!email.includes("@")) {
       setEmailError(true);
@@ -69,18 +72,22 @@ export default function Auth() {
       .then((res) => res.json())
       .then((data) => {
         setIsLoading(false);
-        console.log(data);
-        if (data.token) {
+        // console.log(data);
+        if (data.idToken) {
           const expiration = new Date(
             new Date().getTime() + +data.expiresIn * 1000
           ).toISOString();
-          authCtx.login(data.token, data.refreshToken, expiration);
+          authCtx.login(data.idToken, data.refreshToken, expiration);
           history.replace("/");
+        } else {
+          setErrMessage(data.error.message);
+          throw new Error(data.error.message);
         }
       })
       .catch((err) => {
-        console.log(err);
-        if (err?.errors?.status === "INVALID_ARGUMENT") {
+        // console.log(err);
+        if (err) {
+          setIsLoading(false);
           setHasError(true);
         }
       });
@@ -146,7 +153,10 @@ export default function Auth() {
                   </div>
                   {hasError && (
                     <Typography variant="subtitle2" color="error">
-                      Some technical issues occured.
+                      {errMessage ===
+                      "API key not valid. Please pass a valid API key."
+                        ? "Some technical issues occured."
+                        : errMessage}
                     </Typography>
                   )}
                 </form>

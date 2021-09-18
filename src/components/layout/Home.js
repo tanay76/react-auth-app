@@ -21,7 +21,7 @@ const Home = () => {
         >
           <Typography variant="h4">Welcome on board!</Typography>
           {isLoggedIn && (
-            <Typography variant="h5">You're logged in.</Typography>
+            <p><Typography variant="h5">You're logged in.</Typography></p>
           )}
         </Grid>
       </Grid>

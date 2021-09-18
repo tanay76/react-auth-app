@@ -29,7 +29,11 @@ export default function Header() {
   const classes = useStyles();
   const authCtx = useContext(AuthContext);
 
-  const { isLoggedIn } = authCtx;
+  const { isLoggedIn, logout } = authCtx;
+
+  const logoutHandler = () => {
+    logout();
+  };
 
   return (
     <Fragment>
@@ -54,7 +58,7 @@ export default function Header() {
                 Profile
               </Button>
             </Link>}
-            {isLoggedIn && <Button className={classes.menuButton} color="inherit">
+            {isLoggedIn && <Button className={classes.menuButton} color="inherit" onClick={logoutHandler}>
               Logout
             </Button>}
           </Toolbar>
