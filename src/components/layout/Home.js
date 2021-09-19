@@ -21,7 +21,7 @@ const Home = () => {
         >
           <Typography variant="h4">Welcome on board!</Typography>
           {isLoggedIn && (
-            <p><Typography variant="h5">You're logged in.</Typography></p>
+            <Typography variant="h5" className={classes.para}>You're logged in.</Typography>
           )}
         </Grid>
       </Grid>
@@ -38,4 +38,8 @@ const useStyles = makeStyles((theme) => ({
       0.5
     )}, ${alpha(theme.palette.primary.main, 0.2)} 60%, #fff 100%)`,
   },
+  para: {
+    display: 'block',
+    color: theme.palette.success.main,
+  }
 }));

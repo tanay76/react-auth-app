@@ -56,10 +56,10 @@ export default function Auth() {
     let url;
     if (reqdSignup) {
       url =
-        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyA9IVIp1aJWAIVXrnhHjd8fzfRqean-wA";
+        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyA9IVIp1aJWAIVXrnhHjd8fzfRqean-wAE";
     } else {
       url =
-        "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyA9IVIp1aJWAIVXrnhHjd8fzfRqean-wA";
+        "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyA9IVIp1aJWAIVXrnhHjd8fzfRqean-wAE";
     }
     fetch(url, {
       method: "POST",
@@ -75,7 +75,7 @@ export default function Auth() {
         // console.log(data);
         if (data.idToken) {
           const expiration = new Date(
-            new Date().getTime() + +data.expiresIn * 1000
+            new Date().getTime() + (+data.expiresIn * 1000)
           ).toISOString();
           authCtx.login(data.idToken, data.refreshToken, expiration);
           history.replace("/");

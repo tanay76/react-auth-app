@@ -10,14 +10,14 @@ import { AuthContextProvider } from "./components/context/AuthContext";
 
 ReactDOM.render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <AuthContextProvider>
       <BrowserRouter>
-        <AuthContextProvider>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
           <App />
-        </AuthContextProvider>
+        </ThemeProvider>
       </BrowserRouter>
-    </ThemeProvider>
+    </AuthContextProvider>
   </React.StrictMode>,
   document.getElementById("root")
 );
