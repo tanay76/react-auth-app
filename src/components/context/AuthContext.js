@@ -70,8 +70,8 @@ export const AuthContextProvider = ({ children }) => {
           }
         });
     };
-    console.log(isLoggedIn);
-    console.log(refreshToken);
+    // console.log(isLoggedIn);
+    // console.log(refreshToken);
     if (isLoggedIn) {
       setTimeout(exchangeRefreshToken.bind(null, refreshToken), timeRemaining(expiresIn) - 2000);
     }

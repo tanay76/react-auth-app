@@ -1,14 +1,119 @@
-import React from "react";
+import React, { useState, useContext } from "react";
 import { makeStyles, alpha } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
+import CircularProgress from "@material-ui/core/CircularProgress";
 import Layout from "../layout/Layout";
 import { Typography } from "@material-ui/core";
+import AuthContext from "../context/AuthContext";
 
 export default function Profile() {
   const classes = useStyles();
+  const [oldPassword, setOldPassword] = useState();
+  const [oldPasswordError, setOldPasswordError] = useState(false);
+  const [newPassword, setNewPassword] = useState();
+  const [newPasswordError, setNewPasswordError] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const authCtx = useContext(AuthContext);
+
+  const oldPasswordInputHandler = (event) => {
+    setOldPasswordError(false);
+    setHasError(false);
+    setOldPassword(event.target.value);
+  };
+
+  const newPasswordInputhandler = (event) => {
+    setNewPasswordError(false);
+    setHasError(false);
+    setNewPassword(event.target.value);
+  };
+
+  const passwordChangeHandler = (event) => {
+    event.preventDefault();
+    setIsLoading(true);
+    if (newPassword.length < 7) {
+      setNewPasswordError(true);
+      setIsLoading(false);
+      return;
+    }
+    const token = localStorage.getItem("token");
+    fetch(
+      "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyA9IVIp1aJWAIVXrnhHjd8fzfRqean-wAE",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          idToken: token,
+        }),
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        // console.log(data);
+        const userEmail = data.users[0].email;
+        fetch(
+          "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyA9IVIp1aJWAIVXrnhHjd8fzfRqean-wAE",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              email: userEmail,
+              password: oldPassword,
+              returnSecureToken: true,
+            }),
+          }
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            setIsLoading(false);
+            // console.log(data);
+            if (data.idToken) {
+              const expiration = new Date(
+                new Date().getTime() + +data.expiresIn * 1000
+              ).toISOString();
+              authCtx.login(data.idToken, data.refreshToken, expiration);
+            } else {
+              setIsLoading(false);
+              if (data.error.message === "INVALID_PASSWORD") {
+                setOldPasswordError(true);
+                return;
+              } else {
+                throw new Error(data.error.message);
+              }
+            }
+          })
+          .then(
+            fetch(
+              "https://identitytoolkit.googleapis.com/v1/accounts:update?key=AIzaSyA9IVIp1aJWAIVXrnhHjd8fzfRqean-wAE",
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  idToken: localStorage.getItem("token"),
+                  password: newPassword,
+                  returnSecureToken: true,
+                }),
+              }
+            )
+              .then((res) => res.json())
+              .then((data) => {
+                if (data.idToken) {
+                  const expiration = new Date(
+                    new Date().getTime() + +data.expiresIn * 1000
+                  ).toISOString();
+                  authCtx.login(data.idToken, data.refreshToken, expiration);
+                  setPasswordChanged(true);
+                } else {
+                  throw new Error(data.error.message);
+                }
+              }).catch(err => {
+                setHasError(true);
+              })
+          );
+      });
+  };
+
   return (
     <Layout>
       <div className={classes.root}>
@@ -22,29 +127,61 @@ export default function Profile() {
           >
             <Grid item xs={6}>
               <Paper className={classes.paper}>
-                <Typography variant="h5" color='secondary'>
+                <Typography variant="h5" color="secondary">
                   Your Profile
                 </Typography>
 
-                <form noValidate autoComplete="off">
+                <form
+                  noValidate
+                  autoComplete="off"
+                  onSubmit={passwordChangeHandler}
+                >
                   <TextField
                     className={classes.rootOne}
                     style={{ width: "100%" }}
                     type="password"
                     label="Old Password"
+                    onChange={oldPasswordInputHandler}
                   />
+                  {oldPasswordError && (
+                    <Typography variant="subtitle2" color="error">
+                      Password mismatch.
+                    </Typography>
+                  )}
                   <TextField
                     className={classes.rootOne}
                     style={{ width: "100%" }}
                     type="password"
                     label="New Password"
+                    onChange={newPasswordInputhandler}
                   />
-
-                  <div>
-                    <Button variant="contained" color="secondary">
-                      Change Password
-                    </Button>
-                  </div>
+                  {newPasswordError && (
+                    <Typography variant="subtitle2" color="error">
+                      Password length should be of minimum 7 characters.
+                    </Typography>
+                  )}
+                  {!isLoading && (
+                    <div>
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        type="submit"
+                      >
+                        Change Password
+                      </Button>
+                    </div>
+                  )}
+                  {isLoading && <CircularProgress color="secondary" />}
+                  {hasError && (
+                    <Typography variant="subtitle2" color="error">
+                      Some technical issues occured. Please try later.
+                    </Typography>
+                  )}
+                  {passwordChanged && (
+                    <Typography variant="subtitle2" color="success">
+                      Password changed successfully.
+                    </Typography>
+                  )}
                 </form>
               </Paper>
             </Grid>
