@@ -17,18 +17,21 @@ export default function Profile() {
   const [newPasswordError, setNewPasswordError] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [passwordChanged, setPasswordChanged] = useState(false);
+  const [passwordChangingError, setPasswordChangingError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const authCtx = useContext(AuthContext);
 
   const oldPasswordInputHandler = (event) => {
     setOldPasswordError(false);
     setHasError(false);
+    setPasswordChangingError(false);
     setOldPassword(event.target.value);
   };
 
   const newPasswordInputhandler = (event) => {
     setNewPasswordError(false);
     setHasError(false);
+    setPasswordChangingError(false);
     setNewPassword(event.target.value);
   };
 
@@ -74,8 +77,32 @@ export default function Profile() {
                 new Date().getTime() + +data.expiresIn * 1000
               ).toISOString();
               authCtx.login(data.idToken, data.refreshToken, expiration);
+              fetch(
+                "https://identitytoolkit.googleapis.com/v1/accounts:update?key=AIzaSyA9IVIp1aJWAIVXrnhHjd8fzfRqean-wAE",
+                {
+                  method: "POST",
+                  body: JSON.stringify({
+                    idToken: localStorage.getItem("token"),
+                    password: newPassword,
+                    returnSecureToken: true,
+                  }),
+                }
+              )
+                .then((res) => res.json())
+                .then((data) => {
+                  if (data.idToken) {
+                    const expiration = new Date(
+                      new Date().getTime() + +data.expiresIn * 1000
+                    ).toISOString();
+                    authCtx.login(data.idToken, data.refreshToken, expiration);
+                    setPasswordChanged(true);
+                  } else {
+                    throw new Error(data.error.message);
+                  }
+                });
             } else {
               setIsLoading(false);
+              setPasswordChangingError(true);
               if (data.error.message === "INVALID_PASSWORD") {
                 setOldPasswordError(true);
                 return;
@@ -84,33 +111,9 @@ export default function Profile() {
               }
             }
           })
-          .then(
-            fetch(
-              "https://identitytoolkit.googleapis.com/v1/accounts:update?key=AIzaSyA9IVIp1aJWAIVXrnhHjd8fzfRqean-wAE",
-              {
-                method: "POST",
-                body: JSON.stringify({
-                  idToken: localStorage.getItem("token"),
-                  password: newPassword,
-                  returnSecureToken: true,
-                }),
-              }
-            )
-              .then((res) => res.json())
-              .then((data) => {
-                if (data.idToken) {
-                  const expiration = new Date(
-                    new Date().getTime() + +data.expiresIn * 1000
-                  ).toISOString();
-                  authCtx.login(data.idToken, data.refreshToken, expiration);
-                  setPasswordChanged(true);
-                } else {
-                  throw new Error(data.error.message);
-                }
-              }).catch(err => {
-                setHasError(true);
-              })
-          );
+          .catch((err) => {
+            setHasError(true);
+          });
       });
   };
 
@@ -172,13 +175,16 @@ export default function Profile() {
                     </div>
                   )}
                   {isLoading && <CircularProgress color="secondary" />}
+                  {!passwordChanged && passwordChangingError && (<Typography variant="subtitle2" color="error">
+                      Password couldn't be changed. 
+                  </Typography>)}
                   {hasError && (
                     <Typography variant="subtitle2" color="error">
                       Some technical issues occured. Please try later.
                     </Typography>
                   )}
                   {passwordChanged && (
-                    <Typography variant="subtitle2" color="success">
+                    <Typography variant="subtitle2" className={classes.successMsg}>
                       Password changed successfully.
                     </Typography>
                   )}
@@ -218,4 +224,7 @@ const useStyles = makeStyles((theme) => ({
       backgroundColor: "transparent",
     },
   },
+  successMsg: {
+    color: theme.palette.success.main
+  }
 }));
